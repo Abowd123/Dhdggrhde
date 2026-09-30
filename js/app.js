@@ -69,7 +69,6 @@ import {wireInspector,runInspect,clearFindings} from "./ui/inspector.js";
 import {wireDefaults,renderDefaults,syncDefaults} from "./ui/defaults.js";
 import {wireAI} from "./ui/ai.js";
 import {HOOK} from "./ui/bus.js";
-import {initViewport} from "./ui/viewport.js";
 import {loadUI,uiSet,UIS,setUiError} from "./ui/store.js";
 import {mountIcons} from "./ui/icons.js";
 import {buildRibbon,buildQAT,setTab,syncRibbon,
@@ -428,7 +427,10 @@ addEventListener("beforeunload",()=>saveNow());
  clearFindings();
   if(!SAFE)snapAutoStart(10);
  refresh(true);
- initViewport();
+ /* تحسينٌ اختياريّ: استيرادٌ ديناميكيّ كي لا يُسقط غيابُ الملفّ (نسخةٌ
+    ناقصة/كاش قديم) الإقلاعَ كلّه — يُسجَّل تحذيراً ويُكمل التطبيق. */
+ import("./ui/viewport.js").then(m=>m.initViewport())
+  .catch(e=>console.warn("[viewport] تعذّر تحميل تحسين الهاتف:",e&&e.message));
  resize();
  if(had){
   fit();
