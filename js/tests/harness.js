@@ -744,7 +744,7 @@ export function toolRig(R,o){
   s:String(m==null?"":m)})};
  R.H.prompt=()=>{};
  R.H.refresh=()=>{if(O.invalidate)O.invalidate()};
- R.H.hit=(x,y)=>O.hit?O.hit(x,y):null;
+ R.H.hit=(x,y,k)=>O.hit?O.hit(x,y,k):null;
  R.H.sel=()=>sel.slice();
  R.H.setSel=l=>{sel.length=0; (l||[]).forEach(s=>sel.push(s))};
  R.loadOpts();
@@ -763,7 +763,9 @@ export function toolRig(R,o){
   /* المؤشّرُ الوهميّ: dirOf وإشارةُ المقاس تقرآنه */
   ghost:(x,y)=>{R.T.ghost=(x==null)?null
    :[Math.round(x),Math.round(y)]},
-  at:(x,y)=>R.feedPoint([Math.round(x),Math.round(y)]),
+  /* raw: النقرةُ الخام قبل الالتقاط (snap) — كما يمرّرها canvas */
+  at:(x,y,raw)=>R.feedPoint([Math.round(x),Math.round(y)],
+   raw?[Math.round(raw[0]),Math.round(raw[1])]:undefined),
   type:s=>R.feedText(s),
   enter:()=>R.enter(),
   esc:()=>R.cancel(true),

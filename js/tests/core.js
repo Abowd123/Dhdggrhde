@@ -1038,6 +1038,80 @@ group("المناطقُ",()=>{
  ok(AP2.some(g=>g.t==="text"&&/قديمة/.test(String(g.s))),
   "وتُكتَب «قديمة» صريحاً");
 });
+/* ═══ ١٠-ب · تسميات المناطق: الموضعُ والحجمُ من الشكل ═══
+   مركز الثقل في الممرّ على شكل T يقع قرب الجدران أو خارج الشكل،
+   والخطّ كان ثابتاً مهما صغُرت المنطقة أو كبُرت. */
+const G=await import("../core/geom.js");
+group("تسميات المناطق",()=>{
+ /* الكتلةُ المرسومة فعلاً (من أوّليات النصّ) لا تمسّ ضلعاً وتقع داخل الحلقة */
+ const inside=(a)=>{
+  const T=A.areaPrims(a,txtH()).filter(g=>g.t==="text");
+  return T.every(g=>{
+   const hw=String(g.s).length*g.h*0.62/2;
+   const r={x0:g.x-hw,x1:g.x+hw,y0:g.y-g.h/2,y1:g.y+g.h/2};
+   if(!G.pip(a.ring,g.x,g.y))return false;
+   for(let i=0;i<a.ring.length;i++)
+    if(G.segRect(a.ring[i],a.ring[(i+1)%a.ring.length],r))return false;
+   return true;
+  });
+ };
+ reset();
+ /* ممرٌّ T: شريطٌ أفقي 10×1 م وساقٌ 0.8×3 م — النصّ القديم على مركز
+    الثقل (عرضه ~0.9 م) كان يمسّ جداري الساق */
+ const T=[[0,0],[10000,0],[10000,1000],[5400,1000],[5400,4000],
+          [4600,4000],[4600,1000],[0,1000]];
+ const a=A.addArea(T,"ممر",{showArea:1});
+ const cen=G.centroid(a.ring);
+ const L=A.labelLayout(a);
+ const oldHw=Math.max(3*txtH()*0.62,8*txtH()*0.82*0.62)/2;
+ const oldBox={x0:cen[0]-oldHw,x1:cen[0]+oldHw,
+  y0:cen[1]-1.35*txtH()-0.41*txtH(),y1:cen[1]+0.35*txtH()+txtH()/2};
+ ok(a.ring.some((p,i)=>G.segRect(p,a.ring[(i+1)%a.ring.length],oldBox)),
+  "التسمية القديمة على مركز الثقل كانت تمسّ جداراً في هذا الشكل");
+ ok(inside(a),"واسمُ الممرّ T ومساحتُه الآن داخل الحلقة ولا يمسّان جداراً");
+ ok(G.pip(a.ring,L.c[0],L.c[1]),"وموضعُ التسمية داخل الشكل");
+ ok(L.h>=txtH()*0.5-1e-6&&L.h<=txtH()*1.6+1e-6,
+  "وحجمُ الخطّ ضمن المدى المعلَن");
+ deep(A.labelPt(a).map(Math.round),L.c.map(Math.round),
+  "وموضعُ المقبض L هو موضعُ التسمية المرسومة");
+ const a2=A.addArea([[0,0],[10000,0],[10000,1200],[5600,1200],[5600,5200],
+  [4400,5200],[4400,1200],[0,1200]],"ممر",{showArea:1});
+ ok(inside(a2),"وممرٌّ T أعرض كذلك");
+ /* قطبُ اللاوصول مباشرةً */
+ const PO=G.poleOf(a.ring);
+ ok(G.pip(a.ring,PO.p[0],PO.p[1]),"قطبُ اللاوصول داخل الحلقة");
+ ok(PO.d>=500-1e-6,"ونصفُ قطره ليس أقلّ من نصف عرض الشريط");
+ let bestD=0;
+ for(let x=0;x<=10000;x+=50)for(let y=0;y<=4000;y+=50)
+  if(G.pip(a.ring,x,y))bestD=Math.max(bestD,G.distPoly(a.ring,x,y));
+ ok(PO.d>=bestD-30,"وأوسعُ نقطةٍ فعلاً: بحثٌ شبكيٌّ مستقلّ لا يجد أبعد منها");
+ const PR=G.poleOf([[0,0],[8000,0],[8000,5000],[0,5000]]);
+ near(PR.d,2500,30,"وفي المستطيل نصفُ الضلع الأقصر");
+ near(PR.p[0],4000,300,"وعند منتصفه");
+ eq(G.poleOf([[0,0],[1,1]]).d,0,"وحلقةٌ ناقصة لا قطبَ لها");
+ /* L مقعّرة: المركزُ خارجها أو قرب جدرانها */
+ const Lr=[[0,0],[8000,0],[8000,1000],[1000,1000],[1000,7000],[0,7000]];
+ const b=A.addArea(Lr,"ممر L",{showArea:1});
+ ok(inside(b),"وشكلُ L كذلك");
+ /* الحجم يتناسب مع المساحة */
+ reset();
+ const rect=(w,h)=>A.addArea([[0,0],[w,0],[w,h],[0,h]],"غرفة",{showArea:1});
+ const s1=rect(2000,2000), s2=rect(3464,3464), s3=rect(8000,6000);
+ const h1=A.labelLayout(s1).h, h2=A.labelLayout(s2).h, h3=A.labelLayout(s3).h;
+ ok(h1<h2&&h2<h3,"والخطّ يكبر مع المساحة: "+[h1,h2,h3].map(Math.round));
+ near(h2,txtH(),2,"وحول ١٢ م² يساوي خطَّ المقياس");
+ ok(h3<=txtH()*1.6+1e-6,"وله سقفٌ");
+ ok(h1>=txtH()*0.5-1e-6,"وله أرضية");
+ ok(inside(s1)&&inside(s2)&&inside(s3),"والنصّ داخل كل غرفة");
+ /* المستطيل: الاسمُ على مركز الثقل كما كان */
+ deep(A.labelPt(s3).map(Math.round),G.centroid(s3.ring).map(Math.round),
+  "وفي المستطيل الموضعُ مركزُ الثقل");
+ /* الموضعُ الصريح لا يُنقَل */
+ s3.lp=[1500,1500];
+ deep(A.labelPt(s3),[1500,1500],"والموضعُ الصريح يبقى");
+ const tx=A.areaPrims(s3,txtH()).filter(g=>g.t==="text");
+ ok(tx.every(g=>g.x===1500),"والنصّ مرسومٌ عليه");
+});
 /* ═══ ١١ · المشهد: النطاقاتُ والصناديقُ والعدّادات ═══
    وأربعُ حالاتٍ في آخرها تحرس ما أُصلح: بناءُ نسخةٍ ثانية من رمزٍ
    في render أنتج أربعَ خسائرَ صامتة، وهذه تكشفها سلوكياً. */

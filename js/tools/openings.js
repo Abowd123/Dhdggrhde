@@ -5,7 +5,7 @@ import {S} from "../core/state.js";
 import {m2,m3,M,rng3,dim2} from "../core/units.js";
 import {wallById,wallLen,wallAt,dir} from "../core/walls.js";
 import {addOpen,sAt,openPt,openById,allowed,saySpans,okName,OK} from "../core/opens.js";
-import {defTool,H,rec,ov,ovLen,ovNum,ovOn,
+import {defTool,H,T,rec,ov,ovLen,ovNum,ovOn,
         pvLine,pvBand,pvText} from "./registry.js";
 
 const GRN="#5cd98e", RED="#ff6f6f";
@@ -67,7 +67,18 @@ function mk(id,alias,label,kind,dw,dh,ds,extra){
    }}],
   prev(ctx,g){
    if(!g)return [];
-   const w=wallAt(g[0],g[1],250);
+   /* الجدار الذي ستلتقطه النقرة نفسه (من المؤشّر الخام وبنوعه وحده)،
+      فيتّفق المُبرَز والنتيجة؛ وإلا الأقرب إلى النقطة الملتقَطة */
+   let w=null;
+   const hv=T.hover;
+   if(hv){
+    const h=H.hit(hv[0],hv[1],["open","wall"]);
+    if(h){
+     const o=(h.k==="open")?openById(h.id):null;
+     w=wallById(o?o.wall:h.id);
+    }
+   }
+   if(!w)w=wallAt(g[0],g[1],250);
    if(!w)return [];
    const d=dir(w);
    if(!d)return [];
@@ -85,7 +96,7 @@ function mk(id,alias,label,kind,dw,dh,ds,extra){
   }});
 }
 mk("door","d باب","باب","door","0.9","2.1","0",[
- {k:"kind", label:"النوع",   type:"sel",
+ {k:"kind", label:"النوع",   type:"sel", seg:1,
   items:[["door","مفرد"],["double","مزدوج"],["sliding","سحب"]],
   def:"door"},
  {k:"hinge",label:"المفصّلة",type:"sel",

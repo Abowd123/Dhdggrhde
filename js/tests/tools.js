@@ -37,7 +37,7 @@ await import("../tools/annotate.js");
 await import("../tools/ref.js");
 const R=await import("../tools/registry.js");
 
-const rig=toolRig(R,{hit:(x,y)=>EN.hitTest(x,y,150),
+const rig=toolRig(R,{hit:(x,y,k)=>EN.hitTest(x,y,150,k),
  invalidate:()=>RN.invalidate()});
 const reset=()=>{
  newState(); ensureShape(); RN.invalidate();
@@ -132,8 +132,18 @@ group("أداةُ الجدار",()=>{
  /* والإغلاق */
  rig.type("c");
  eq(S.walls.length,3,"وc يُغلِق المضلّع");
- ok(!R.active(),"وينهي الأداة");
+ ok(R.active(),"والأداةُ تبقى فعّالة بعد c — حتى Esc");
+ eq(R.step().p,"نقطة البداية","وتبدأ سلسلةً جديدة من الخطوة الأولى");
  deep(S.walls[2].b,[0,0],"والضلعُ الأخير يعود إلى البداية");
+ /* سلسلةٌ ثانية ثم Enter واحدٌ يُنهيها وتبقى الأداة */
+ rig.type("10,10"); rig.type("@2,0");
+ eq(S.walls.length,4,"وسلسلةٌ ثانية");
+ rig.enter();
+ ok(R.active(),"وEnter واحدٌ يُنهي السلسلة والأداةُ فعّالة");
+ eq(R.step().p,"نقطة البداية","ويعود للبداية");
+ rig.esc();
+ ok(!R.active(),"وEsc يُنهي الأداة");
+ eq(S.walls.length,4,"ويُبقي ما رُسم");
  /* ═══ التراجعُ خطوةً ═══ */
  reset(); rig.defs("wall");
  R.begin("wall");
@@ -210,6 +220,46 @@ group("المستطيل والقياس",()=>{
  rig.enter();
  ok(rig.said(/المساحة/,"ok"),"والمساحةَ لأربع نقاط");
  eq(cnt(),0,"ولا يُنشئ شيئاً بعدها");
+});
+/* ═══ ٥-ب · الفتحات: النقر المباشر على الجدار ═══
+   كان الالتقاط يمرّ على كل الأنواع بترتيب الأصغر أولاً، فيسرق العمودُ
+   أو البُعدُ أو التأشيرُ القريب النقرةَ ويُرفَض الجدار الذي تحتها
+   برسالة «انقر على جدار». وكانت النقرة تصل مُلتقَطةً على الشبكة
+   فتبتعد أحياناً عن الجدار. */
+group("الفتحات: النقر المباشر على الجدار",()=>{
+ reset(); rig.defs("door");
+ const w=W.addWall([0,0],[6000,0],200,"int","c");
+ K.addCol("rect",[2000,0],400,400,0,"conc");   /* عمودٌ فوق الجدار */
+ RN.invalidate();
+ R.begin("door");
+ rig.clear();
+ rig.at(2000,0);
+ eq(S.opens.length,1,"النقر على الجدار تحت عمودٍ يضع الباب");
+ eq(S.opens[0].wall,w.id,"على الجدار نفسه");
+ ok(!rig.said(/انقر على/,"er"),"ولا رسالة «انقر على جدار»");
+ /* النقرة المُلتقَطة بعيدةٌ عن الجدار والخام عليه */
+ rig.at(4500,900,[4500,40]);
+ eq(S.opens.length,2,"والالتقاط على الشبكة لا يُبعد النقرة عن الجدار");
+ eq(S.opens[1].wall,w.id,"والباب على الجدار");
+ /* نقرةٌ في الفراغ تُرفَض برسالتها */
+ rig.clear();
+ rig.at(3000,2500,[3000,2500]);
+ eq(S.opens.length,2,"ونقرةٌ في الفراغ لا تضع شيئاً");
+ ok(rig.said(/لا عنصر|انقر على/,"er"),"وتُقال علّتها");
+ rig.esc();
+ /* التمرير: الجدارُ المُبرَز هو الذي سيُلتقَط، ورقمُه يظهر */
+ reset(); rig.defs("door");
+ const w5=W.addWall([0,0],[6000,0],200,"int","c");
+ K.addCol("rect",[2000,0],400,400,0,"conc");
+ RN.invalidate();
+ R.begin("door");
+ R.T.hover=[2000,0];
+ rig.ghost(2000,0);
+ const pv=R.preview();
+ ok(pv.some(x=>x.t==="tx"&&x.s.includes(w5.id)),
+  "تمريرُ المؤشّر فوق الجدار يُظهر رقمَه");
+ R.T.hover=null;
+ rig.esc();
 });
 /* ═══ ٥ · الفتحات: الموضعُ من النقرة أو من الحقل ═══ */
 group("أدواتُ الفتحات",()=>{

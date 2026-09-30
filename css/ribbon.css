@@ -11,7 +11,7 @@
   color-mix(in srgb,var(--bg3) 86%,var(--brand) 14%),var(--bg3));
  color:var(--brandf);
  border:1px solid var(--brandb); border-radius:var(--r3);
- padding:5px 14px; cursor:pointer; font-weight:600;
+ padding:2px 12px; cursor:pointer; font-weight:600;
  letter-spacing:.3px; box-shadow:var(--sh1),var(--edge);
  transition:border-color .14s,background .14s,transform .14s;
 }

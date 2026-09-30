@@ -19,11 +19,18 @@
 #tools button.del{color:var(--er)}
 #tools button:disabled{opacity:.35;cursor:default}
 
+/* عائم فوق الرسم (داخل #stage) فلا يحجز صفّاً كاملاً من المساحة.
+   فارغٌ في وضع التحديد فيختفي، ولا يعترض نقرات الرسم خارج أزراره. */
 #optbar{
- flex:none; display:flex; align-items:center; gap:9px; flex-wrap:wrap;
- padding:5px 10px; background:var(--bg2);
- border-bottom:1px solid var(--ln); min-height:34px;
+ position:absolute; z-index:9; inset-block-start:8px; inset-inline-start:8px;
+ max-inline-size:calc(100% - 64px); pointer-events:auto;
+ display:flex; align-items:center; gap:9px; flex-wrap:wrap;
+ padding:4px 10px; border-radius:var(--r3);
+ background:color-mix(in srgb,var(--bg2) 88%,transparent);
+ backdrop-filter:blur(8px);
+ border:1px solid var(--ln2); box-shadow:var(--sh2),var(--edge);
 }
+#optbar:empty{display:none}
 #optbar .tl{color:var(--brand);font-size:12px;white-space:nowrap;font-weight:600}
 #optbar .of{display:flex;align-items:center;gap:5px}
 #optbar .of>span{color:var(--fg3);font-size:11.5px;white-space:nowrap}
@@ -38,6 +45,16 @@
  display:inline-flex;align-items:center;gap:5px;color:var(--fg2);
  font-size:11.5px;cursor:pointer}
 #optbar .hint{color:var(--fg3);font-size:11.5px}
+/* اختيار سريع: مجموعة أزرار متلاصقة */
+#optbar .seg{display:inline-flex;border:1px solid var(--fldbd);
+ border-radius:var(--r1);overflow:hidden}
+#optbar .seg button{background:var(--bg4);color:var(--fg2);border:0;
+ border-inline-start:1px solid var(--fldbd);padding:3px 10px;
+ font:inherit;font-size:11.5px;cursor:pointer;white-space:nowrap}
+#optbar .seg button:first-child{border-inline-start:0}
+#optbar .seg button:hover{background:var(--hov);color:var(--fg)}
+#optbar .seg button.on{background:var(--acq);color:var(--acf)}
+#optbar .seg button:focus-visible{outline:none;box-shadow:var(--focus)}
 
 #side{
  flex:none; width:312px; overflow-y:auto; overflow-x:hidden;

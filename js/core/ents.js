@@ -43,10 +43,15 @@ const of=(s,fn,dflt)=>{
    صندوقٌ واحد من الفهرس يخدم الأنواع كلّها. ويُوسَّع بـ 1.25 من
    التفاوت لأن التأشير يُصاب بـ T×1.2، وبـ 220 على الأقلّ لأن
    wallAt يقبل تفاوته الخاصّ (200) حين لا يُمرَّر إليه شيء. */
-export function hitTest(x,y,tol){
+/* kinds (اختياري): نوعٌ أو قائمةُ أنواع — خطواتُ «انقر على جدار» تلتقط
+   نوعَها وحده فلا يسرق عمودٌ أو بُعدٌ أو تأشيرٌ قريب النقرةَ من الجدار.
+   بلا kinds السلوكُ كما كان بترتيب الإصابة الكامل. */
+export function hitTest(x,y,tol,kinds){
  const T=tol||150;
+ const only=kinds?[].concat(kinds):null;
  const Q=SI.query(SI.boxAt(x,y,Math.max(T*1.25,220)));
  for(const d of HORD){
+  if(only&&!only.includes(d.k))continue;
   const c=Q[d.k];
   if(!c||!c.length)continue;
   const cand=c.map(r=>r.e);

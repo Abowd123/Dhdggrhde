@@ -29,7 +29,7 @@ export const setBatch=v=>{BATCH.on=v?1:0};
 
 export const TOOLS={};
 export const T={id:null,def:null,steps:null,i:0,ctx:null,
- snap:null,ghost:null,lock:null,lenLock:null,last:null,lastArg:null,
+ snap:null,ghost:null,hover:null,lock:null,lenLock:null,last:null,lastArg:null,
  hist:[]};
 
 export function defTool(d){
@@ -142,7 +142,7 @@ export function promptText(){
 /* ═══ الدخول والخروج ═══ */
 function reset(){
  T.id=null; T.def=null; T.steps=null; T.i=0;
- T.ctx=null; T.snap=null; T.lock=null; T.lenLock=null; T.ghost=null;
+ T.ctx=null; T.snap=null; T.lock=null; T.lenLock=null; T.ghost=null; T.hover=null;
 }
 /* ═══ معاملةُ الجلسة ═══
    الأداةُ تلتقط لقطتها عند begin وتدفع خطوةً واحدة عند finish. وعملياتُ
@@ -253,6 +253,9 @@ function advance(){
  if(!step())finish(); else H.prompt();
 }
 export const nextStep=advance;
+/* إنهاءُ سلسلةٍ مع بقاء الأداة فعّالة: تبدأ سلسلةً جديدة من الخطوة الأولى
+   والجدرانُ المرسومة تبقى في الأداة حتى Esc (خطوة تاريخٍ واحدة) */
+export const endChain=()=>{restart(); H.draw()};
 /* إدراج خطوات فرعية بعد الجارية — للأدوات المتفرّعة مثل rotate R */
 export const pushSteps=arr=>{
  if(T.steps)T.steps.splice(T.i+1,0,...(arr||[]));
@@ -314,7 +317,9 @@ function useEnt(st,hit,p){
 }
 
 /* ═══ التغذية ═══ */
-export function feedPoint(p){
+/* raw: النقرة الخام قبل الالتقاط (snap) — الالتقاطُ يُزيح النقطة عن الكيان
+   أحياناً، فاختيارُ الكيان يكون من الخام والموضعُ من p */
+export function feedPoint(p,raw){
  const st=step();
  if(!st)return false;
  if(st.confirm){
@@ -324,7 +329,12 @@ export function feedPoint(p){
  try{
   markStep();
   if(st.ent){
-   const hit=H.hit(p[0],p[1]);
+   const q=raw||p;
+   /* النوع المطلوب (وبدائله entVia) أولاً؛ وإلا فالالتقاط العام لرسالة
+      الرفض الصحيحة «انقر على جدار» عند الإصابة بنوعٍ آخر */
+   const kinds=(st.ent===1)?null
+    :[st.ent].concat(Object.keys(st.entVia||{}));
+   const hit=(kinds&&H.hit(q[0],q[1],kinds))||H.hit(q[0],q[1]);
    if(!hit)throw new Error("لا عنصر هنا");
    useEnt(st,hit,p);
   }else if(st.ang){
@@ -478,6 +488,9 @@ export function enter(){
    H.rep("wr",`تحتاج ${st.min} على الأقل`);
    return false;
   }
+  /* chainRestart: Enter يُنهي السلسلة الجارية فقط وتبقى الأداة فعّالة
+     لسلسلةٍ جديدة؛ الخروج منها بـEsc */
+  if(st.chainRestart){jrAdd("."); restart(); H.draw(); return true}
   T.i++; jrAdd("."); T.lock=null; T.lenLock=null;
   if(!step())finish(); else {H.prompt(); H.draw()}
   return true;

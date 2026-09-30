@@ -33,6 +33,7 @@
   #optbar input[type=number],
   #optbar select{min-height:44px; min-width:88px; font-size:14px; padding:6px 10px}
   #optbar .of>span{font-size:13px}
+  #optbar .seg button{min-height:44px; min-width:64px; font-size:14px; padding:6px 14px}
 
   /* الإرساء */
   .dsz{inline-size:12px}
@@ -58,13 +59,10 @@
 @media (max-width:1100px) and (pointer:coarse),
        (max-width:900px){
   #tools{display:none !important}
+  /* عائم داخل #stage: على اللمس يُرسى أسفل الرسم قرب الإبهام */
   #optbar{
-    position:sticky;
-    bottom:0;
-    z-index:9;
-    background:var(--bg2);
-    border-top:1px solid var(--ln);
-    border-bottom:none;
+    inset-block-start:auto;
+    inset-block-end:8px;
     box-shadow:0 -4px 12px rgba(0,0,0,.15);
   }
 }
@@ -199,3 +197,14 @@ html.dsk-on-phone #ribbon.min #rbPanes{display:block}
 html.dsk-on-phone #side, html.dsk-on-phone #sideE{max-width:46vw}
 html.dsk-on-phone .flt{inset-inline-start:8px !important;
   inset-block-start:60px !important; max-width:92vw}
+
+/* ─── 9. زرّ اللوحة الجانبية على الجوال ───
+   على ≤768 تصير اللوحة الجانبية ورقةً سفلية مخفية (translateY(100%)) ويفتحها
+   #fabDock وحده؛ لكنّه كان يحمل hidden في index.html ولا شيء في JS يُظهره،
+   و[hidden]{display:none!important} العامّ يغلب display:flex — فاختفت اللوحة
+   بلا طريقة لفتحها. نُظهره هنا بخصوصيةٍ أعلى، وعلى جهة البدء كي لا يركب
+   زرّ المساعد (inset-inline-end). */
+@media (max-width:768px){
+  #fabDock[hidden]{display:flex !important}
+  #fabDock{inset-inline-end:auto; inset-inline-start:12px}
+}

@@ -190,6 +190,43 @@ export function distPoly(p,x,y){
  return m;
 }
 
+/* قطب اللاوصول: أبعد نقطةٍ داخل الحلقة عن حدودها (الدائرة الداخلية
+   العظمى). مركز الثقل في الأشكال المقعّرة (T · L · ممرّ) يقع قرب
+   الجدران أو خارج الشكل؛ وهذا لا يقع أبداً. بحثٌ بالخلايا المتناقصة
+   (خوارزمية polylabel) بدقّة prec ملم. يعيد {p:[x,y], d} حيث d نصف
+   قطر الدائرة = أدنى مسافةٍ إلى الحدّ. */
+export function poleOf(ring,prec){
+ const n=(ring||[]).length;
+ if(n<3){const c=centroid(ring||[]); return {p:c,d:0}}
+ const B=bboxOf(ring);
+ const w=B.x1-B.x0, h=B.y1-B.y0;
+ const cs=Math.min(w,h);
+ if(cs<=0)return {p:[B.x0,B.y0],d:0};
+ const pr=prec>0?prec:Math.max(10,cs/200);
+ const sd=(x,y)=>{const d=distPoly(ring,x,y); return pip(ring,x,y)?d:-d};
+ const cell=(x,y,hh)=>{const d=sd(x,y); return {x,y,h:hh,d,m:d+hh*Math.SQRT2}};
+ const Q=[];
+ let hh=cs/2;
+ for(let x=B.x0;x<B.x1;x+=cs)
+  for(let y=B.y0;y<B.y1;y+=cs)Q.push(cell(x+hh,y+hh,hh));
+ const c0=centroid(ring);
+ let best=cell(c0[0],c0[1],0);
+ const bc=cell((B.x0+B.x1)/2,(B.y0+B.y1)/2,0);
+ if(bc.d>best.d)best=bc;
+ let guard=0;
+ while(Q.length&&guard++<20000){
+  let k=0;
+  for(let i=1;i<Q.length;i++)if(Q[i].m>Q[k].m)k=i;
+  const c=Q.splice(k,1)[0];
+  if(c.d>best.d)best=c;
+  if(c.m-best.d<=pr)continue;
+  const q=c.h/2;
+  Q.push(cell(c.x-q,c.y-q,q),cell(c.x+q,c.y-q,q),
+         cell(c.x-q,c.y+q,q),cell(c.x+q,c.y+q,q));
+ }
+ return {p:[best.x,best.y],d:best.d};
+}
+
 /* ═══ بنّاؤو المضلّعات ═══ */
 export function bandPoly(x1,y1,x2,y2,t){
  const dx=x2-x1, dy=y2-y1, L=Math.hypot(dx,dy);

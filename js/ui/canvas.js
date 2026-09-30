@@ -174,7 +174,7 @@ export function snap(x,y,from){
  return p;
 }
 /* ═══ التحديد — يُفوّض إلى ents ═══ */
-export const hitTest=(x,y)=>E.hitTest(x,y,(matchMedia('(pointer:coarse)').matches?22:14)/V.k);
+export const hitTest=(x,y,kinds)=>E.hitTest(x,y,(matchMedia('(pointer:coarse)').matches?22:14)/V.k,kinds);
 /* موضعٌ تمثيليّ للكيان — لتثبيت البطاقات قربه */
 export function shapeOfSel(s){
  const poly=E.outlineOf(s);
@@ -893,7 +893,7 @@ function onDown(e){
    UI.free=drag.free;
    draw(); return;
   }
-  R.feedPoint(snap(raw[0],raw[1],R.baseOf()));
+  R.feedPoint(snap(raw[0],raw[1],R.baseOf()),[raw[0],raw[1]]);
   HOOK.prompt();
   return;
  }
@@ -1025,7 +1025,13 @@ function onMove(e){
  if(R.active()){
   const st=R.step();
   /* خطوة تنتظر عنصراً ⇒ أبرِز المرشَّح تحت المؤشّر قبل النقر */
-  if(st&&st.ent)UI.pre=E.hitTest(raw[0],raw[1],14/V.k);
+  /* المُبرَز هو ما ستلتقطه النقرة: نوعُ الخطوة (وبدائله) قبل غيره */
+  if(st&&st.ent){
+   const ks=(st.ent===1)?null:[st.ent].concat(Object.keys(st.entVia||{}));
+   UI.pre=(ks&&E.hitTest(raw[0],raw[1],14/V.k,ks))
+    ||E.hitTest(raw[0],raw[1],14/V.k);
+  }
+  R.T.hover=[raw[0],raw[1]];
   R.T.ghost=snap(raw[0],raw[1],R.baseOf());
   HOOK.prompt(); draw(); return;
  }

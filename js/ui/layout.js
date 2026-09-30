@@ -9,7 +9,7 @@
 
 export const PANELS=[
  {id:"proj",   ico:"props",   z:"s", o:1},
- {id:"lays",   ico:"layers",  z:"s", o:1},
+ {id:"lays",   ico:"layers",  z:"s", o:0},
  {id:"props",  ico:"panel",   z:"s", o:1},
  {id:"sched",  ico:"table",   z:"s", o:0},
  {id:"osched", ico:"table",   z:"s", o:0},
@@ -41,7 +41,7 @@ export const WS={
  arch:{n:"معماري", shell:"ribbon", tab:"arch", clean:0,
   zw:{s:312,e:270}, mode:{s:"acc",e:"acc"}, auto:{s:0,e:0},
   s:["proj","lays","props","insp","ai","state"], e:[],
-  open:["lays","props","insp"]},
+  open:["props","insp"]},
 
  annot:{n:"تأشير", shell:"ribbon", tab:"annt", clean:0,
   zw:{s:300,e:288}, mode:{s:"acc",e:"tab"}, auto:{s:0,e:0},
@@ -57,12 +57,12 @@ export const WS={
   zw:{s:312,e:270}, mode:{s:"acc",e:"acc"}, auto:{s:0,e:0},
   s:["proj","lays","props","sched","osched","axes","ai","guide"],
   e:["ref","sheet","insp","export","defs","state"],
-  open:["lays","props","insp","state"]},
+  open:["props","insp","state"]},
 
  bare:{n:"بلا شريط", shell:"classic", tab:"home", clean:0,
   zw:{s:288,e:264}, mode:{s:"acc",e:"acc"}, auto:{s:1,e:0},
   s:["props","lays","insp","state"], e:[],
-  open:["props","lays"]},
+  open:["props"]},
 
  tablet:{n:"تابلت", shell:"ribbon", tab:"home", clean:0,
   zw:{s:360,e:0}, mode:{s:"acc",e:"acc"}, auto:{s:1,e:0},

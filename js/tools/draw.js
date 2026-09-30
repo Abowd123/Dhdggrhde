@@ -6,7 +6,7 @@ import {m2,m3,mm,dm2} from "../core/units.js";
 import {addWall,ALIGN,dir,wallLen,bulgeFrom3,arcParams,band,
         arcTess} from "../core/walls.js";
 import {addPline,plineLen} from "../core/plines.js";
-import {defTool,H,rec,finish,undoStep,ov,ovLen,ovOn,
+import {defTool,H,rec,finish,endChain,undoStep,ov,ovLen,ovOn,
         pvLine,pvRect,pvBand,pvPoly,pvText} from "./registry.js";
 
 const GRN="#5cd98e", YEL="#ffd06b", PNK="#ff8f8f";
@@ -28,10 +28,10 @@ function mkWall(ctx,a,b){
 }
 defTool({
  id:"wall", alias:"w جدار خط", label:"جدار",
- hint:"نقطتان لكل جدار · C يغلق · U يتراجع خطوة",
+ hint:"نقطتان لكل جدار · C يغلق · Enter ينهي السلسلة · Esc يخرج · U يتراجع",
  opts:[
   {k:"t",    label:"السماكة م", type:"len", def:"0.15"},
-  {k:"type", label:"النوع",     type:"sel", items:TY, def:"int"},
+  {k:"type", label:"النوع",     type:"sel", seg:1, items:TY, def:"int"},
   {k:"align",label:"المسار على",type:"sel", items:AL, def:"c",
    hint:"يسار ويمين بالنسبة لاتجاه الرسم"},
   {k:"h",    label:"ارتفاع السترة م", type:"len", def:"1",
@@ -39,12 +39,13 @@ defTool({
   {k:"chain",label:"متّصل",     type:"chk", def:1}],
  steps:[
   {p:"نقطة البداية"},
-  {p:"النقطة التالية", loop:1, base:-1,
+  {p:"النقطة التالية", loop:1, base:-1, chainRestart:1,
    opts:{
     c:{n:"إغلاق",run(ctx){
      if(ctx.pts.length<3)throw new Error("الإغلاق يحتاج ثلاث نقاط");
      mkWall(ctx,ctx.pts[ctx.pts.length-1],ctx.pts[0]);
-     finish("أُغلق المضلع");
+     H.rep("ok","أُغلق المضلع — ابدأ سلسلة جديدة أو Esc للخروج");
+     endChain();
     }},
     u:{n:"تراجع",run(){undoStep()}}},
    each(ctx,p){
@@ -93,7 +94,7 @@ defTool({
  hint:"البداية · النهاية · نقطةٌ على القوس",
  opts:[
   {k:"t",    label:"السماكة م", type:"len", def:"0.15"},
-  {k:"type", label:"النوع",     type:"sel", items:TY, def:"int"},
+  {k:"type", label:"النوع",     type:"sel", seg:1, items:TY, def:"int"},
   {k:"h",    label:"ارتفاع السترة م", type:"len", def:"1",
    when:o=>o.type==="low"}],
  steps:[
@@ -144,7 +145,7 @@ defTool({
  hint:"ركنان متقابلان · أو اكتب مقاساً مثل 9x14",
  opts:[
   {k:"t",    label:"السماكة م", type:"len", def:"0.25"},
-  {k:"type", label:"النوع",     type:"sel", items:TY, def:"ext"},
+  {k:"type", label:"النوع",     type:"sel", seg:1, items:TY, def:"ext"},
   {k:"align",label:"القياس",    type:"sel",
    items:[["c","محوري"],["l","داخلي صافٍ"],["r","خارجي كلّي"]],
    def:"c"}],

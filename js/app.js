@@ -138,7 +138,7 @@ function build(){
  R.H.rep=(c,m)=>rep(c,m);
  R.H.prompt=()=>syncPrompt();
  R.H.refresh=()=>refresh(false);
- R.H.hit=(x,y)=>hitTest(x,y);
+ R.H.hit=(x,y,k)=>hitTest(x,y,k);
  R.H.sel=()=>selList();
  R.H.setSel=l=>setSel(l||[],null);
  R.H.del=()=>delSel();

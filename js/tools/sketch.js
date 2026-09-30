@@ -55,7 +55,7 @@ defTool({
  hint:"اسحب لترسم · Enter يعرض الخطّة · Enter يؤكّد · U يمسح آخر ضربة",
  opts:[
   {k:"t",      label:"السماكة م", type:"len", def:"0.2"},
-  {k:"type",   label:"النوع",     type:"sel", items:TY, def:"ext"},
+  {k:"type",   label:"النوع",     type:"sel", seg:1, items:TY, def:"ext"},
   {k:"align",  label:"المسار على",type:"sel", items:AL, def:"c"},
   {k:"cal",    label:"طول أطول ضلع م", type:"len", def:"",
    hint:"فارغ = بمقياس خربشتك · اكتب طولاً تعرفه لتُعايَر الخطّة"},

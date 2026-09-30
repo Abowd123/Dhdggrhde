@@ -107,6 +107,17 @@ let barSig=null;
 
 function ctlOf(f,v){
  const tag=`data-ok="${esc(f.k)}"`;
+ /* seg: أزرار بدل القائمة المنسدلة — نقرة واحدة بدل نقرتين.
+    القيمة نفسها تُكتب عبر setOpt فلا يتغيّر شيء في التخزين. */
+ if(f.type==="sel"&&f.seg)
+  return `<span class="of"><span>${esc(f.label)}</span>`
+   +`<span class="seg" role="radiogroup" aria-label="${esc(f.label)}">`
+   +f.items.map(([iv,it])=>{
+     const on=String(iv)===String(v);
+     return `<button type="button" role="radio" data-seg="${esc(f.k)}"`
+      +` data-v="${esc(iv)}" aria-checked="${on}"`
+      +`${on?' class="on"':""}>${esc(it)}</button>`;
+    }).join("")+`</span></span>`;
  if(f.type==="sel")
   return `<span class="of"><span>${esc(f.label)}</span>`
    +`<select ${tag}>`
@@ -136,9 +147,9 @@ export function buildOptbar(){
  const d=R.T.def;
  barSig=sigOf(d);
  if(!d){
-  box.innerHTML=`<span class="tl">تحديد</span>`
-   +`<span class="hint">دوس على عنصر، أو اسحب على الفاضي لتحديد كذا واحد · `
-   +`Shift+دوسة يضيف • المقابض تتسحب • Ctrl+A يحدّد اللي ظاهر</span>`;
+  /* وضع التحديد: لا خيارات، والشريط عائم فوق الرسم فيُترك فارغاً
+     (يخفيه CSS بـ :empty) بدل تغطية الرسم بنصّ إرشاد. */
+  box.innerHTML="";
   return;
  }
  const o=R.OPT[d.id]||{};
@@ -155,6 +166,13 @@ export function syncOptbar(){
  if(!box)return;
  const o=R.OPT[d.id]||{};
  const A=document.activeElement;
+ box.querySelectorAll("[data-seg]").forEach(b=>{
+  const on=String(o[b.dataset.seg])===b.dataset.v;
+  if(b.classList.contains("on")!==on){
+   b.classList.toggle("on",on);
+   b.setAttribute("aria-checked",String(on));
+  }
+ });
  box.querySelectorAll("[data-ok]").forEach(el=>{
   if(el===A)return;              /* لا نكتب فوق ما يكتبه المستخدم */
   const v=o[el.dataset.ok];
@@ -167,15 +185,24 @@ export function syncOptbar(){
   if(el.value!==s)el.value=s;
  });
 }
-$("#optbar").addEventListener("change",e=>{
- const k=e.target.dataset.ok;
+function applyOpt(k,v){
  if(!k||!R.T.def)return;
- const v=(e.target.type==="checkbox")?(e.target.checked?1:0)
-  :e.target.value;
  R.setOpt(R.T.def.id,k,v);
  syncOptbar();      /* يعيد البناء وحده إن ظهر حقلٌ شرطيّ أو اختفى */
  HOOK.prompt();
  HOOK.defs();       /* لوحة الافتراضات تُظهر القيمة نفسها */
+}
+$("#optbar").addEventListener("change",e=>{
+ const k=e.target.dataset.ok;
+ if(!k)return;
+ applyOpt(k,(e.target.type==="checkbox")?(e.target.checked?1:0)
+  :e.target.value);
+});
+/* أزرار الاختيار السريع */
+$("#optbar").addEventListener("click",e=>{
+ const b=e.target.closest&&e.target.closest("[data-seg]");
+ if(!b)return;
+ applyOpt(b.dataset.seg,b.dataset.v);
 });
 /* منع تسرّب المفاتيح من حقول الخيارات إلى الاختصارات */
 $("#optbar").addEventListener("keydown",e=>{

@@ -2282,6 +2282,10 @@ group("ثبات الواجهة على الهاتف",()=>{
  ok(/initViewport\(\)/.test(app),"app.js يستدعي initViewport عند الإقلاع");
  ok(/pointer:coarse/.test(wr)&&/setMin\(0\)/.test(wr),
   "autoFit لا يطوي الشريط على اللمس ويفتح المطويّ المحفوظ");
+ ok(/#fabDock\[hidden\]\{display:flex !important\}/.test(tc),
+  "زرّ #fabDock يُظهَر على الجوال (وإلا تختفي اللوحة الجانبية بلا مفتح)");
+ ok(/#fabDock\[hidden\]\{display:flex !important\}/.test(tc),
+  "زرّ #fabDock يُظهَر على الجوال (وإلا تختفي اللوحة الجانبية بلا مفتح)");
  ok(/html,body\{overflow-x:hidden/.test(tc.split("/* ─── 7.")[1]||""),
   "overflow-x:hidden عامّ لا داخل ≤768 وحدها");
 });

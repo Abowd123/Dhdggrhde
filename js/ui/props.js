@@ -519,6 +519,8 @@ const LORD=()=>LAYS().map(l=>({L:l.n,n:l.d||l.n,
  col:l.col,aux:AUX.has(l.n)}));
 /* الطبقةُ المفتوحةُ للتحرير — حالُ عرضٍ عابرٌ لا تفضيلَ يُحفَظ */
 let LCUR=null;
+/* إظهار الطبقات الفارغة — حالُ عرضٍ عابرٌ كـ LCUR، الأصل إخفاؤها */
+let LEMPTY=false;
 const LFN={col:"لون الشاشة",pcol:"لون الورق",lw:"وزن الخطّ",
  lt:"نوع الخطّ",op:"الشفافية",aci:"رمز ACI",d:"الوصف"};
 
@@ -589,7 +591,12 @@ function laysStates(){
 function renderLays(box){
  if(LCUR&&!hasLay(LCUR))LCUR=null;
  const C=layCounts();
- box.innerHTML=LORD().map(x=>{
+ /* الفارغة (عدّها صفر) تُخفى، إلا ما يهمّ المستخدم: المفتوحة للتحرير،
+    والمخفيّة أو المقفلة (حالٌ غيّرها بيده ولا يجوز أن تضيع عنه). */
+ const ALL=LORD();
+ const keep=x=>LEMPTY||(C[x.L]||0)>0||x.L===LCUR||!vis(x.L)||locked(x.L);
+ const ROWS=ALL.filter(keep), EMPTY=ALL.length-ROWS.length;
+ box.innerHTML=ROWS.map(x=>{
   const on=vis(x.L), lk=locked(x.L), pl=plots(x.L);
   const n=C[x.L]||0, cur=(LCUR===x.L);
   /* عنوانُ القفل يُحسَب هنا: كسرُ السطر داخل ${…} كان يفتح قالباً
@@ -619,6 +626,10 @@ function renderLays(box){
    +`class="lbtn">◧</button>`
    +`</div>`;
  }).join("")
+ +((EMPTY||LEMPTY)
+   ?`<div class="btnrow"><button id="lEmpty">`
+    +(LEMPTY?"إخفاء الطبقات الفارغة":`إظهار الفارغة (${EMPTY})`)
+    +`</button></div>`:"")
  +`<div class="btnrow"><button id="lAdd" class="pri">＋ إضافة طبقة…</button></div>`
  +(LCUR?laysEditor(LCUR):"")
  +laysStates();
@@ -1359,6 +1370,11 @@ document.addEventListener("click",e=>{
  if(lsl){
   const n=lsl.dataset.lsel;
   LCUR=(LCUR===n)?null:n;
+  renderPanel("lays",1);
+  return;
+ }
+ if(t.id==="lEmpty"){
+  LEMPTY=!LEMPTY;
   renderPanel("lays",1);
   return;
  }

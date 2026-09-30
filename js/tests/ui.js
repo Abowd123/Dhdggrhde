@@ -354,6 +354,11 @@ await groupAsync("لوحةُ الخصائص",async()=>{
  ok(said(/مخفيّة/),"ويُقال");
  click($('#lays [data-loff="A-WALL"]'));
  ok(L.vis("A-WALL"),"ويُظهِر");
+ /* الطبقاتُ الفارغة مخفيّةٌ افتراضياً (البند 6) وتُظهَر بزرّ */
+ ok(!$('#lays [data-lplot="A-REFR"]'),"والفارغة (A-REFR) مخفيّةٌ افتراضياً");
+ ok(!!$('#lays [data-lplot="A-WALL"]'),"وما فيه كياناتٌ ظاهر (A-WALL)");
+ ok(!!$("#lEmpty"),"وزرُّ «إظهار الفارغة» موجود");
+ click($("#lEmpty"));
  const pl=$('#lays [data-lplot="A-REFR"]');
  ok(!!pl,"وزرُّ الطبع مبنيّ");
  eq(L.plots("A-REFR"),false,
@@ -366,6 +371,8 @@ await groupAsync("لوحةُ الخصائص",async()=>{
  const lk=$('#lays [data-llock="A-GRID"]');
  ok(!!lk,"وزرُّ القفل مبنيّ للمساعدة");
  ok(lk.disabled,"ومُعطَّلٌ — لا كياناتَ تُحدَّد عليها");
+ click($("#lEmpty"));
+ ok(!$('#lays [data-lplot="A-REFR"]'),"والنقرةُ الثانية تُعيد إخفاءها");
  /* ═══ محرِّرُ الطبقة ═══ */
  clr();
  click($('#lays [data-lsel="A-WALL"]'));

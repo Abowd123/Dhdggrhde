@@ -7,11 +7,11 @@
    لا تستورد render.js: الحلقات تُمرَّر إليها وسيطاً، فلا دورة.
    ولا sindex.js: فهرس صناديق الأجسام في walls.js — وهي تستورده
    سلفاً، فلا اتجاهَ يُقلَب. */
-import {S,VER,edit} from "./state.js";
+import {S,VER,edit,txtH} from "./state.js";
 import {V} from "./validate.js";
 import {newId,clamp,sqm,m2,m3} from "./units.js";
 import {pArea,ccw,centroid,perim,pip,bboxOf,bboxHit,
-        cleanRing} from "./geom.js";
+        cleanRing,distPoly,poleOf,segRect} from "./geom.js";
 import {band,wallsIn} from "./walls.js";
 import {bump} from "./perf.js";
 import {normLevel} from "./level.js";
@@ -25,7 +25,94 @@ export const areaById=id=>S.areas.find(a=>a.id===id)||null;
    صافية بين الوجوه الداخلية، لأن الحلقة هي حدّ الفراغ نفسه. */
 export const netArea=a=>Math.abs(pArea((a&&a.ring)||[]));
 export const netPerim=a=>perim((a&&a.ring)||[]);
-export const labelPt=a=>(a.lp?a.lp.slice():centroid(a.ring||[]));
+/* ═══ تخطيط التسمية ═══
+   موضع الاسم والمساحة وحجم خطّهما يُحسبان من شكل المنطقة لا من مركز
+   ثقلها وحده: في الممرّات على شكل T أو L يقع المركز قرب الجدران أو
+   خارج الشكل، فيتداخل النصّ مع الحدود.
+   · الحجم المفضَّل يتناسب مع √المساحة (حول ١٢ م² = خطّ المقياس).
+   · يُخفَّض الحجم بخطواتٍ حتى تتّسع كتلة النصّ كاملةً (الاسم والمساحة
+     و«قديمة») داخل الحلقة بهامشٍ عن كل ضلع.
+   · الموضع: مركز الثقل إن اتّسع فيه (فالمستطيل كما كان)، وإلا قطب
+     اللاوصول، وإلا أوسع النقاط الداخلية.
+   · الموضع الصريح lp لا يُنقَل: يُخفَّض الحجم وحده ليتّسع.
+   التقدير 0.62×الارتفاع للحرف كما في render (حدود النصّ). */
+const TW=0.62, LMIN=0.5, LMAX=1.6, AREF=12e6, SHRINK=0.88;
+const blockOf=(a,h,stale)=>{
+ const two=!!(a.name&&a.showArea), it=[];
+ if(a.name)it.push({k:"n",s:a.name,dy:R(two?h*0.35:-h*0.5),h});
+ if(a.showArea)
+  it.push({k:"a",s:`${sqm(netArea(a))} م²`,dy:R(two?-h*1.35:-h*0.5),
+   h:h*0.82});
+ if(stale)it.push({k:"s",s:"قديمة",dy:R(a.name?h*1.9:h*1.1),h:h*0.7});
+ return it;
+};
+const boxOf=it=>{
+ let hw=0,y0=1/0,y1=-1/0;
+ it.forEach(g=>{
+  hw=Math.max(hw,String(g.s).length*g.h*TW/2);
+  y0=Math.min(y0,g.dy-g.h/2);
+  y1=Math.max(y1,g.dy+g.h/2);
+ });
+ return it.length?{hw,y0,y1}:{hw:0,y0:0,y1:0};
+};
+/* الكتلة بهامش m حول مركزٍ c لا تمسّ ضلعاً وتقع داخل الحلقة */
+const fitsAt=(ring,c,bx,m)=>{
+ const r={x0:c[0]-bx.hw-m,x1:c[0]+bx.hw+m,
+          y0:c[1]+bx.y0-m,y1:c[1]+bx.y1+m};
+ if(!pip(ring,c[0],c[1]+(bx.y0+bx.y1)/2))return false;
+ for(let i=0,n=ring.length;i<n;i++)
+  if(segRect(ring[i],ring[(i+1)%n],r))return false;
+ return true;
+};
+const LC=new WeakMap();
+function candidates(a,ring){
+ if(a.lp)return [a.lp.slice()];
+ const cen=centroid(ring), pole=poleOf(ring);
+ const out=[];
+ const dc=pip(ring,cen[0],cen[1])?distPoly(ring,cen[0],cen[1]):-1;
+ /* مركز الثقل أوّلاً ما دام قريباً من أوسع نقطة: المستطيل يبقى مركزه */
+ if(dc>=0.85*pole.d&&dc>0)out.push(cen);
+ out.push(pole.p);
+ /* احتياط: أوسع النقاط الداخلية بشبكةٍ خشنة */
+ const B=bboxOf(ring);
+ if(B){
+  const st=Math.max(100,Math.min(B.x1-B.x0,B.y1-B.y0)/25);
+  const g=[];
+  for(let x=B.x0+st/2;x<B.x1;x+=st)
+   for(let y=B.y0+st/2;y<B.y1;y+=st)
+    if(pip(ring,x,y))g.push({p:[R(x),R(y)],d:distPoly(ring,x,y)});
+  g.sort((u,v)=>v.d-u.d);
+  g.slice(0,60).forEach(q=>out.push(q.p));
+ }
+ return out;
+}
+export function labelLayout(a,base){
+ const ring=(a&&a.ring)||[];
+ const b=base>0?base:txtH();
+ if(ring.length<3)return {c:[0,0],h:b,it:[]};
+ const stale=isStale(a);
+ const key=[ring.map(p=>p[0]+","+p[1]).join(";"),b,a.name||"",
+  a.showArea?1:0,stale?1:0,a.lp?a.lp.join(","):""].join("|");
+ const hit=LC.get(ring);
+ if(hit&&hit.key===key)return hit.v;
+ const f=Math.min(LMAX,Math.max(LMIN,Math.sqrt(netArea(a)/AREF)));
+ const hPref=b*f, hMin=b*LMIN;
+ const C=candidates(a,ring);
+ let v=null;
+ for(let h=hPref;!v;h*=SHRINK){
+  const hh=Math.max(h,hMin);
+  const it=blockOf(a,hh,stale), bx=boxOf(it), m=hh*0.3;
+  const c=C.find(q=>fitsAt(ring,q,bx,m));
+  if(c)v={c:[R(c[0]),R(c[1])],h:hh,it};
+  else if(hh<=hMin){
+   /* لا يتّسع حتى بالأصغر: أوسع نقطةٍ بالحجم الأصغر — أفضل المتاح */
+   v={c:[R(C[0][0]),R(C[0][1])],h:hh,it};
+  }
+ }
+ LC.set(ring,{key,v});
+ return v;
+}
+export const labelPt=a=>(a.lp?a.lp.slice():labelLayout(a).c.slice());
 
 /* ═══ البصمة ═══
    بصمة الجدران المجاورة للحلقة. حسّاسة بقصد: تُنبّه ولا تُصلح.
@@ -198,20 +285,10 @@ export function areaPrims(a,txtH){
   out.push({t:"fill",L:"A-AREA",ring:a.ring,style:a.fill,aid:a.id});
  out.push({t:"poly",L:"A-AREA",pts:a.ring,cl:1,aid:a.id,
   dash:st?[420,300]:null, warn:st?1:0});
- const h=txtH, c=labelPt(a);
- const two=!!(a.name&&a.showArea);
- if(a.name)
-  out.push({t:"text",L:"A-AREA",s:a.name,x:c[0],
-   y:R(c[1]+(two?h*0.35:-h*0.5)),h,al:"mc",aid:a.id,
-   warn:st?1:0});
- if(a.showArea)
-  out.push({t:"text",L:"A-AREA",s:`${sqm(netArea(a))} م²`,
-   x:c[0], y:R(c[1]-(two?h*1.35:h*0.5)), h:h*0.82, al:"mc",
-   aid:a.id, warn:st?1:0});
- if(st)
-  out.push({t:"text",L:"A-AREA",s:"قديمة",
-   x:c[0], y:R(c[1]+(a.name?h*1.9:h*1.1)), h:h*0.7, al:"mc",
-   aid:a.id, warn:1});
+ /* الحجم والموضع من تخطيط الشكل — انظر labelLayout */
+ const L=labelLayout(a,txtH), c=L.c;
+ L.it.forEach(g=>out.push({t:"text",L:"A-AREA",s:g.s,x:c[0],
+  y:R(c[1]+g.dy),h:g.h,al:"mc",aid:a.id,warn:st?1:0}));
  return out;
 }
 export const areaLabel=a=>`${a.name||"(بلا اسم)"} · ${sqm(netArea(a))} م²`

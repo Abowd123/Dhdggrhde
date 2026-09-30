@@ -26,8 +26,8 @@ button{transition:background var(--t) var(--ease),
 .mono{font-family:var(--mono)}
 
 #top{
- flex:none; display:flex; align-items:center; gap:11px;
- padding:7px 14px;
+ flex:none; display:flex; align-items:center; gap:9px;
+ padding:3px 10px;
  background:linear-gradient(180deg,
   color-mix(in srgb,var(--bg3) 58%,var(--bg2)),var(--bg2));
  border-bottom:1px solid var(--ln);
