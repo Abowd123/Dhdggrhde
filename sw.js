@@ -6,7 +6,7 @@
    التطبيق بلا اتصال بعد زيارةٍ واحدة.
    طلباتُ المزوّد الخارجيّ (المفتاح في ترويسته) وغير GET لا نعترضها.
    رفع CACHE يُسقِط كل ما قبله عند التفعيل. */
-const CACHE="civildraft-v1";
+const CACHE="civildraft-v2";
 const CORE=["./","./index.html","./css/theme.css","./css/base.css","./js/app.js"];
 
 self.addEventListener("install",e=>{

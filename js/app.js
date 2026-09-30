@@ -69,6 +69,7 @@ import {wireInspector,runInspect,clearFindings} from "./ui/inspector.js";
 import {wireDefaults,renderDefaults,syncDefaults} from "./ui/defaults.js";
 import {wireAI} from "./ui/ai.js";
 import {HOOK} from "./ui/bus.js";
+import {initViewport} from "./ui/viewport.js";
 import {loadUI,uiSet,UIS,setUiError} from "./ui/store.js";
 import {mountIcons} from "./ui/icons.js";
 import {buildRibbon,buildQAT,setTab,syncRibbon,
@@ -427,6 +428,7 @@ addEventListener("beforeunload",()=>saveNow());
  clearFindings();
   if(!SAFE)snapAutoStart(10);
  refresh(true);
+ initViewport();
  resize();
  if(had){
   fit();

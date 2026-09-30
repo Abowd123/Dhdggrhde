@@ -50,7 +50,7 @@ function boot(){
  const caches={
   open:async()=>({addAll:async u=>u.forEach(x=>store.set(x,{u:x})),
    put:async(r,res)=>{store.set(r.url,res)}}),
-  keys:async()=>["civildraft-v0","civildraft-v1"],
+  keys:async()=>["civildraft-v0","civildraft-v2"],
   delete:async k=>{deleted.push(k);return true},
   match:async r=>store.get(typeof r==="string"?r:r.url)};
  const ctx=vm.createContext({self,caches,URL,Promise,
@@ -68,7 +68,7 @@ const resp=(ok_=true,type="basic")=>({ok:ok_,type,clone(){return this}});
 await groupAsync("41 · sw: تفعيلٌ يحذف القديم فقط",async()=>{
  const w=boot(); let pr;
  w.L.activate({waitUntil:p=>{pr=p}}); await pr;
- eq(JSON.stringify(w.deleted),'["civildraft-v0"]',"حُذف v0 وبقي v1");
+ eq(JSON.stringify(w.deleted),'["civildraft-v0"]',"حُذف v0 وبقي v2");
 });
 await groupAsync("41 · sw: الشبكة أولاً (لا نسخةَ قديمةً عالقة)",async()=>{
  const w=boot(); w.store.set("https://app.test/js/app.js",{old:1});

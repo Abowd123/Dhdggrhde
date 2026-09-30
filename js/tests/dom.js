@@ -2268,4 +2268,21 @@ group("الجوال — الترويسة لا توسّع الصفحة والشر
  ok(/--rbH/.test(ov)&&/ResizeObserver/.test(ov)&&/setProperty/.test(ov),
   "overflow.js ينشر --rbH ويتابع تغيّره");
 });
+/* ═══ ثبات الواجهة على الهاتف (js/ui/viewport.js + touch.css §7-8) ═══ */
+group("ثبات الواجهة على الهاتف",()=>{
+ const vp=SRC.get(join(ROOT,"js/ui/viewport.js"))||"";
+ const app=SRC.get(join(ROOT,"js/app.js"))||"";
+ const wr=SRC.get(join(ROOT,"js/ui/ribbon/wire.js"))||"";
+ const tc=readFileSync(join(ROOT,"css/touch.css"),"utf8");
+ ok(vp.length>300,"js/ui/viewport.js موجود");
+ ok(/ResizeObserver/.test(vp)&&/#?stage/.test(vp)&&/resize\(\)/.test(vp),
+  "لوحة الرسم تتبع حجم #stage بـResizeObserver");
+ ok(/dsk-on-phone/.test(vp)&&/dsk-on-phone/.test(tc),
+  "فئة «موقع سطح المكتب» على الهاتف تُوضَع من JS وتُستعمل في CSS");
+ ok(/initViewport\(\)/.test(app),"app.js يستدعي initViewport عند الإقلاع");
+ ok(/pointer:coarse/.test(wr)&&/setMin\(0\)/.test(wr),
+  "autoFit لا يطوي الشريط على اللمس ويفتح المطويّ المحفوظ");
+ ok(/html,body\{overflow-x:hidden/.test(tc.split("/* ─── 7.")[1]||""),
+  "overflow-x:hidden عامّ لا داخل ≤768 وحدها");
+});
 process.exit(summary()?1:0);

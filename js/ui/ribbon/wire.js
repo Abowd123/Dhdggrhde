@@ -298,6 +298,15 @@ export const ktOn=()=>KT;
 let autoDone=false;
 export function autoFit(){
  if(UIS.shell!=="ribbon"||autoDone)return;
+ /* الهاتف/التابلت باللمس: لا يُطوى الشريط تلقائياً (ارتفاع الشاشة القصير
+    هو الحالة الطبيعية هناك، والطيّ كان يُخفي الأزرار كلّها). وإن كان
+    الطيّ محفوظاً من جلسةٍ سابقة فُتح مرّةً واحدة ليرى المستخدم أزراره. */
+ const touchy=matchMedia("(pointer:coarse)").matches||innerWidth<=1100;
+ if(touchy){
+  autoDone=true;
+  if(UIS.ribbonMin){setMin(0); saveUI()}
+  return;
+ }
  if(innerHeight<760&&!UIS.ribbonMin){
   autoDone=true;
   setMin(1); saveUI();
